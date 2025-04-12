@@ -1,0 +1,60 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: clubee-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_URL: ${POSTGRES_URL}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    networks:
+      - esports-network
+
+  api:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    container_name: esports-api
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - rabbitmq
+    env_file:
+      - .env
+    networks:
+      - esports-network
+
+  rabbitmq:
+    image: rabbitmq:4.0.6-management-alpine
+    container_name: esports-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD}
+      RABBIT_USER: ${RABBIT_USER}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+      RABBIT_PORT: ${RABBIT_PORT}
+      RABBIT_HOST: ${RABBIT_HOST}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    env_file:
+      - .env
+    networks:
+      - esports-network
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+
+networks:
+  esports-network:
+    driver: bridge
